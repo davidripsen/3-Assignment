@@ -1,7 +1,15 @@
+#install.packages("ctsmr", repo = "http://ctsm.info/repo/dev")
+#install.packages("pkgbuild")
+
+# For git pushing
+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
+
+git push https://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@github.com/davidripsen/3-Assignment.git
+
 library(ctsmr)
 library(splines)
-source("sdeTiTm.R")
-load("Exercise3.RData")
+source("CompEx3_E18/sdeTiTm.R")
+load("CompEx3_E18/Exercise3.RData")
 fit1 <- sdeTiTm(AllDat,AllDat$yTi1,AllDat$Ph1)
 
 summary(fit1,extended=TRUE)
