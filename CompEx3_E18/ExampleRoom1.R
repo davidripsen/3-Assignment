@@ -1,15 +1,19 @@
-#install.packages("ctsmr", repo = "http://ctsm.info/repo/dev")
-#install.packages("pkgbuild")
+install.packages("ctsmr", repo = "http://ctsm.info/repo/dev")
+install.packages("pkgbuild")
 
 # For git pushing
-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
-
-git push https://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@github.com/davidripsen/3-Assignment.git
+## git push https://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@github.com/davidripsen/3-Assignment.git
 
 library(ctsmr)
 library(splines)
 source("CompEx3_E18/sdeTiTm.R")
-load("CompEx3_E18/Exercise3.RData")
+# Load data
+if (Sys.info()[7] == "davidipsen")
+  {path <- "~/Documents/DTU/3. Semester (MSc)/Advanced Time Series/Assignments/3-Assignment/CompEx3_E18/"
+} else {path <- "CompEx3_E18/"}
+load(paste0(path,"Exercise3.RData"))
+AllDat
+
 fit1 <- sdeTiTm(AllDat,AllDat$yTi1,AllDat$Ph1)
 
 summary(fit1,extended=TRUE)

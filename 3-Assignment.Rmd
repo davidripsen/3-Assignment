@@ -115,8 +115,16 @@ Clearly, with the increasing $\sigma$, the trajectories more often takes "the fu
 # Part 2: Modelling a building using CTSM-R
 ## 2a: 2-state model of a single room
 
+We will estimate 
+
 ```{r}
-#ExampleRoom1.R
+# Load data
+if (Sys.info()[7] == "davidipsen")
+  {path <- "~/Documents/DTU/3. Semester (MSc)/Advanced Time Series/Assignments/3-Assignment/CompEx3_E18/"
+} else {path <- "CompEx3_E18/"}
+load(paste0(path,"Exercise3.RData"))
+D = AllDat
+D
 ```
 
 
