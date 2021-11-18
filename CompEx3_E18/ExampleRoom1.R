@@ -1,5 +1,5 @@
-install.packages("ctsmr", repo = "http://ctsm.info/repo/dev")
-install.packages("pkgbuild")
+#install.packages("ctsmr", repo = "http://ctsm.info/repo/dev")
+#install.packages("pkgbuild")
 
 # For git pushing
 ## git push https://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@github.com/davidripsen/3-Assignment.git
@@ -30,7 +30,7 @@ plot(AllDat$Gv ~ Hour)
 
 
 idx <- (Hour>8 & Hour < 23) # It is impossible to fit a window area for the hours without any sun, so we limit the window area estimation to the hours with sun.
-bs = bs(Hour[idx],df=5,intercept=TRUE) 
+bs = bs(Hour[idx],df=5,intercept=TRUE) # Dvs. 4 knots / 5 basis splines
 
 # What does the splines look like?
 plot(bs[14:27,1],type='l')
@@ -55,8 +55,8 @@ AllDat$bs5 = bs5
 
 
 ### You will have to implement sdeTITmAv ###
-# source("sdeTiTmAv.R")
-#fit2 <- sdeTiTmAv(AllDat,AllDat$yTi1,AllDat$Ph1)
+source(paste0(path,"sdeTiTmAv.R"))
+fit2 <- sdeTiTmAv(AllDat,AllDat$yTi1,AllDat$Ph1)
 
 plot(bs[14:27,1]*fit2$xm[3]+bs[14:27,2]*fit2$xm[4]+bs[14:27,3]*fit2$xm[5]+bs[14:27,4]*fit2$xm[6]+bs[14:27,5]*fit2$xm[7],type='l')
-
+fit2
