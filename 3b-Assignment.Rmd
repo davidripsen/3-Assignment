@@ -14,24 +14,128 @@ knitr::opts_chunk$set(echo = TRUE)
 # Part 2: Modelling a building using CTSM-R
 ## 2a: 2-state model of a single room
 
-We will estimate 
+We will estimate the following model where the impact of the measured radiation $G_v$ is scaled relative the sun's angle through the window. Since we do not have access to this information, a non-parametric fit will be done using B-splines.
 
-```{r}
+$$\begin{aligned} d T_{i} &=\frac{1}{C_{i}}\left(\frac{1}{R_{i a}}\left(T_{a}-T_{i}\right)+\frac{1}{R_{i m}}\left(T_{m}-T_{i}\right)+\Phi+\left(\sum_{k=1}^{N} a_{k} b s_{k}(t)\right) G_{v}\right) d t+\sigma_{1} d w_{1} \\ d T_{m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{i}-T_{m}\right)\right) d t+\sigma_{2} d w_{2} . \\ y T_{i} &=T_{i}+e_{1}, \end{aligned}$$
+
+
+```{r, results="hide"}
+#install.packages("ctsmr", repo = "http://ctsm.info/repo/dev")
+#install.packages("pkgbuild")
+
+# For git pushing
+## git push https://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@github.com/davidripsen/3-Assignment.git
+
+library(ctsmr)
+library(splines)
+source("CompEx3_E18/sdeTiTm.R")
 # Load data
 if (Sys.info()[7] == "davidipsen")
   {path <- "~/Documents/DTU/3. Semester (MSc)/Advanced Time Series/Assignments/3-Assignment/CompEx3_E18/"
 } else {path <- "CompEx3_E18/"}
 load(paste0(path,"Exercise3.RData"))
-D = AllDat
-head(D)
-tail(D)
+#AllDat
+
+########## Initial model ############
+  fit1 <- sdeTiTm(AllDat,AllDat$yTi1,AllDat$Ph1) # Original model
+  
+  summary(fit1,extended=TRUE)
+  fit1$loglik
+  
+  Hour <- as.numeric(strftime(AllDat$date, format="%H"))
+  
+  Pred <- predict(fit1)
+  plot(Pred[[1]]$state$pred$Ti - AllDat$yTi1 ~ Hour)
+  
+  # Fit only splines for radiation hours
+  #plot(AllDat$Gv ~ Hour) #
+  
+  
+  idx <- (Hour>8 & Hour < 23) # It is impossible to fit a window area for the hours without any sun, so we limit the window area estimation to the hours with sun.
+  bs = bs(Hour[idx],df=5,intercept=TRUE) # Dvs. 4 knots / 5 basis splines
+  
+  # What does the splines look like?
+  plot(bs[14:27,1],type='l')
+  lines(bs[ 14:27,2])
+  lines(bs[ 14:27,3])
+  lines(bs[ 14:27,4])
+  lines(bs[ 14:27,5])
+  
+  bs1 <- bs2 <- bs3 <- bs4 <- bs5 <- bs6 <- numeric(dim(AllDat)[1])
+  
+  bs1[idx] = bs[,1]
+  bs2[idx] = bs[,2]
+  bs3[idx] = bs[,3]
+  bs4[idx] = bs[,4]
+  bs5[idx] = bs[,5]
+  
+  AllDat$bs1 = bs1
+  AllDat$bs2 = bs2
+  AllDat$bs3 = bs3
+  AllDat$bs4 = bs4
+  AllDat$bs5 = bs5
+
+
+### IMPLEMENT THE MENTIONED MODEL ###
+source(paste0(path,"sdeTiTmAv.R"))
+fit2 <- sdeTiTmAv(AllDat,AllDat$yTi1,AllDat$Ph1)
 ```
 
+Let's compare the two models
 
-Visualisations
 ```{r}
-plot(D$Ta * D$Gv, D$yTi1)
+sprintf('Model 1: logL = %f', fit1$loglik)
+sprintf('Model 2: logL = %f', fit2$loglik)
 ```
+
+I.e. we see a very large improvement in likelihood (for only 4 extra parameters).
+
+```{r}
+summary(fit2, extended=T)
+
+#plot(9:22, bs[14:27,1]*fit2$xm[3]+bs[14:27,2]*fit2$xm[4]+bs[14:27,3]*fit2$xm[5]+bs[14:27,4]*fit2$xm[6]+bs[14:27,5]*fit2$xm[7],type='l')
+```
+
+We see that all parameters are significant, except for a2. For completeness, a2 is kept in the model. Let's visualize the spline-fit
+
+
+```{r}
+plot(9:22, bs[14:27,1]*fit2$xm[3]+bs[14:27,2]*fit2$xm[4]+bs[14:27,3]*fit2$xm[5]+bs[14:27,4]*fit2$xm[6]+bs[14:27,5]*fit2$xm[7],type='l')
+```
+
+Remember, that the above fit is not the actual input radiation to the room, but it is a *weighting* of the actual radiation. Apparently, the model would like to have more emphasis on the radiation when the sun is low.
+
+
+
+
+
+
+# 2b: Improving the single-room model
+In this part, I will try to expand the model.
+1. Note how the effect of the temperature in room 3 and 4 affects only room 1 through the medium of room 2. In other words: $T_1$ is *conditionally independent* of $T_3$ and $T_4$ when $T_2$ is known.
+
+2. Initially, I added the temperature of the neighboring room ($T_2$) as an additional state and then had it impact $dT_1$. However, I realized that the temperature of room 2 only affects room 1 through *the wall* as a medium, i.e. the thermal mass of room 1. And since we have direct measurements of $T2$ and only focus on modelling the single-room ($T1$), I add it as input to the model with the term: $$\frac{1}{R_{2,1}}(T_2-T_1)$$
+thereby letting the change in thermal mass of room 1 ($dT_m$) being proportional to the difference in temperature between the two rooms.
+
+The model is then
+
+$$\begin{aligned} d T_{1} &=\frac{1}{C_{1}}\left(\frac{1}{R_{i a}}\left(T_{a}-T_{1}\right)+\frac{1}{R_{i m}}\left(T_{m}-T_{1}\right)+\Phi+\left(\sum_{k=1}^{N} a_{k} b s_{k}(t)\right) G_{v}\right) d t+\sigma_{1} d w_{1} \\
+d T_{m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{1}-T_{m}\right) + \frac{1}{R_{2,1}}(T_2-T_1)\right) d t+\sigma_{2} d w_{2} . \\ y T_{1} &=T_{1}+e_{1}, \end{aligned}$$
+
+Let's estimate it
+```{r, include="hide"}
+source(paste0(path,"2b-sdeT1T2TmAv.R"))
+fit3 <- sdeT1T2TmAv(AllDat,AllDat$yTi1,AllDat$Ph1)
+```
+
+Let's have a look at the model.
+```{r}
+sprintf('Model 3: logL = %f', fit3$loglik)
+sprintf('Likelihood ratio test: p-value = %f', 1-pchisq(abs(2*(fit2$loglik - fit3$loglik)),1))
+summary(fit3, extended=F)
+```
+
+Again, a large improvement in likelihood is seen (at the cost of 1 extra parameter). Since the two models are nested, at likehood ratio test is performed and shows a very strong signficant difference.
 
 Let's try expanding the model.
 1. Note how the effect of the temperature in room 3 and 4 affects only room 1 through the medium of room 2. In other words: $Y_1$ is *conditionally independent* of $Y_3$ and $Y_4$ when $Y_2$ is known.

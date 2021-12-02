@@ -12,7 +12,7 @@ sdeTiTmAv <- function(data, yTi,Ph){
   
   model$addSystem(dTm ~  1/Cm*(1/Rim*(Ti-Tm))*dt + exp(p22)*dw2)
   # Set the names of the inputs
-  model$addInput(Ta,Gv,Ph,bs1,bs2,bs3,bs4,bs4)
+  model$addInput(Ta,Gv,Ph,bs1,bs2,bs3,bs4,bs5)
   # Set the observation equation: Ti is the state, yTi is the measured output
   model$addObs(yTi ~ Ti)
   # Set the variance of the measurement error
@@ -31,11 +31,11 @@ sdeTiTmAv <- function(data, yTi,Ph){
   model$setParameter(p11 = c(init = 1, lb = -30, ub = 10))
   model$setParameter(p22 = c(init = 1, lb = -30, ub = 10))
   model$setParameter(e11 = c(init = -1, lb = -50, ub = 10))
-  model$setParameter(a1 = c(init = 0.2, lb = 0, ub = 1))
-  model$setParameter(a2 = c(init = 0.2, lb = 0, ub = 1))
-  model$setParameter(a3 = c(init = 0.2, lb = 0, ub = 1))
-  model$setParameter(a4 = c(init = 0.2, lb = 0, ub = 1))
-  model$setParameter(a5 = c(init = 0.2, lb = 0, ub = 1))
+  model$setParameter(a1 = c(init = 4, lb = -500, ub = 1000))
+  model$setParameter(a2 = c(init = 4, lb = -500, ub = 1000))
+  model$setParameter(a3 = c(init = 4, lb = -500, ub = 1000))
+  model$setParameter(a4 = c(init = 4, lb = -500, ub = 1000))
+  model$setParameter(a5 = c(init = 4, lb = -500, ub = 1000))
   ##----------------------------------------------------------------    
   
   # Run the parameter optimization

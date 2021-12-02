@@ -1,7 +1,8 @@
-2b_sdeT1T2TmAv <- function(data, yT1,yT2,Ph){
+sdeT1T2TmAv <- function(data,yT1,Ph){
+  # Observed variables / data
   data$yT1 <- yT1
   data$Ph <- Ph
-  data$T2 <- yT2
+  data$T2 <- data$yTi2
   bs1 = data$bs1; bs2 = data$bs2; bs3 = data$bs3; bs4 = data$bs4; bs5 = data$bs5; 
   # Generate a new object of class ctsm
   model = ctsm()
@@ -12,7 +13,7 @@
                   + exp(p11)*dw1)
   model$addSystem(dTm ~  1/Cm*(1/Rim*(T1-Tm) + 1/R_21*(T2-T1))*dt + exp(p22)*dw2)
   # Set the names of the inputs
-  model$addInput(Ta,Gv,Ph,bs1,bs2,bs3,bs4,bs4)
+  model$addInput(Ta,Gv,Ph,bs1,bs2,bs3,bs4,bs5,T2)
   # Set the observation equation: T1 is the state, yT1 is the measured output
   model$addObs(yT1 ~ T1)
   # Set the variance of the measurement error
@@ -20,7 +21,6 @@
   ##----------------------------------------------------------------
   # Set the initial value (for the optimization) of the value of the state at the starting time point
   model$setParameter(T1 = c(init = 15, lb = 0, ub = 40))
-  model$setParameter(T2 = c(init = 15, lb = 0, ub = 40))
   model$setParameter(Tm = c(init = 15, lb = 0, ub = 40))
   ##----------------------------------------------------------------
   # Set the initial value for the optimization
@@ -39,6 +39,9 @@
   model$setParameter(a4 = c(init = 0.2, lb = 0, ub = 1))
   model$setParameter(a5 = c(init = 0.2, lb = 0, ub = 1))
   ##----------------------------------------------------------------    
+  # Optimization criteria
+   #model$options$eps(1E-6)
+   #model$options$maxNumberOfEval(10)
   
   # Run the parameter optimization
   
