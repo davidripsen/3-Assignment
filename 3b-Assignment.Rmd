@@ -1,0 +1,44 @@
+---
+title: 
+author:
+date: 
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# Part 2: Modelling a building using CTSM-R
+## 2a: 2-state model of a single room
+
+We will estimate 
+
+```{r}
+# Load data
+if (Sys.info()[7] == "davidipsen")
+  {path <- "~/Documents/DTU/3. Semester (MSc)/Advanced Time Series/Assignments/3-Assignment/CompEx3_E18/"
+} else {path <- "CompEx3_E18/"}
+load(paste0(path,"Exercise3.RData"))
+D = AllDat
+head(D)
+tail(D)
+```
+
+
+Visualisations
+```{r}
+plot(D$Ta * D$Gv, D$yTi1)
+```
+
+Let's try expanding the model.
+1. Note how the effect of the temperature in room 3 and 4 affects only room 1 through the medium of room 2. In other words: $Y_1$ is *conditionally independent* of $Y_3$ and $Y_4$ when $Y_2$ is known.
+---- disadvantage: Time delay for a change in T2 before it enters T1 -> enter Tm before -> Make Tm also a function of T2?
+==
+Men hey, er det ikke bare via Thermal Mass (Tm) at room1 bliver påvirket?
+2. Dvs. dTm = ...Org.... + 1/R_21*(T2-T1x)
+
+
+
