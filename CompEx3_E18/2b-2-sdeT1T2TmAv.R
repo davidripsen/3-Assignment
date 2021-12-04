@@ -1,4 +1,4 @@
-sdeT1T2TmAv <- function(data,yT1,Ph){
+sdeT1T2TmAvfit4 <- function(data,yT1,Ph){
   # Observed variables / data
   data$yT1 <- yT1
   data$Ph <- (data$Ph1 + data$Ph2) / 2
@@ -8,7 +8,7 @@ sdeT1T2TmAv <- function(data,yT1,Ph){
   model = ctsm()
   # Add a system equation and thereby also a state
   # Gv in T1: Aw/Ci*Gv or Tm: Aw/Cm*Gv
-  model$addSystem(dT1 ~  1/Ci*(1/Ria*(Ta-T1) + 1/Rim*(Tm-T1) + ((1-c)*Ph - c*Ph*(T1/Ta)/T1) +
+  model$addSystem(dT1 ~  1/Ci*(1/Ria*(Ta-T1) + 1/Rim*(Tm-T1) + ((1-c)*Ph - c*Ph*(T1 - Ta)) +
                                  (a1*bs1 + a2*bs2 + a3*bs3 + a4*bs4 + a5*bs5)*Gv)*dt
                   + exp(p11)*dw1)
   model$addSystem(dTm ~  1/Cm*(1/Rim*(T1-Tm) + 1/R_21*(T2-T1))*dt + exp(p22)*dw2)
