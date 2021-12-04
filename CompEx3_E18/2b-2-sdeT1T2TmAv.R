@@ -1,14 +1,14 @@
 sdeT1T2TmAv <- function(data,yT1,Ph){
   # Observed variables / data
   data$yT1 <- yT1
-  data$Ph <- Ph
+  data$Ph <- (data$Ph1 + data$Ph2) / 2
   data$T2 <- data$yTi2
   bs1 = data$bs1; bs2 = data$bs2; bs3 = data$bs3; bs4 = data$bs4; bs5 = data$bs5; 
   # Generate a new object of class ctsm
   model = ctsm()
   # Add a system equation and thereby also a state
   # Gv in T1: Aw/Ci*Gv or Tm: Aw/Cm*Gv
-  model$addSystem(dT1 ~  1/Ci*(1/Ria*(Ta-T1) + 1/Rim*(Tm-T1) + Ph +
+  model$addSystem(dT1 ~  1/Ci*(1/Ria*(Ta-T1) + 1/Rim*(Tm-T1) + ((1-c)*Ph - c*Ph*(T1/Ta)/T1) +
                                  (a1*bs1 + a2*bs2 + a3*bs3 + a4*bs4 + a5*bs5)*Gv)*dt
                   + exp(p11)*dw1)
   model$addSystem(dTm ~  1/Cm*(1/Rim*(T1-Tm) + 1/R_21*(T2-T1))*dt + exp(p22)*dw2)
@@ -38,10 +38,11 @@ sdeT1T2TmAv <- function(data,yT1,Ph){
   model$setParameter(a3 = c(init = 1.2802e+01, lb = -500, ub = 1000))
   model$setParameter(a4 = c(init = -6.8605e+00, lb = -500, ub = 1000))
   model$setParameter(a5 = c(init = 4.7242e+01, lb = -500, ub = 1000))
+  model$setParameter(c = c(init = 0.9, lb = 0, ub = 5))
   ##----------------------------------------------------------------    
   # Optimization criteria
-   #model$options$eps(1E-6)
-   #model$options$maxNumberOfEval(10)
+  #model$options$eps(1E-6)
+  #model$options$maxNumberOfEval(10)
   
   # Run the parameter optimization
   

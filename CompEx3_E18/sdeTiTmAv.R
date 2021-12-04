@@ -27,7 +27,7 @@ sdeTiTmAv <- function(data, yTi,Ph){
   model$setParameter(Cm = c(init = 1000, lb = 1E-5, ub = 1E5))
   model$setParameter(Ria = c(init = 20, lb = 1E-4, ub = 1E5))
   model$setParameter(Rim = c(init = 20, lb = 1E-4, ub = 1E5))
-  model$setParameter(Aw = c(init = 6, lb = 1E-2, ub = 7.5+4.8+5))
+  #model$setParameter(Aw = c(init = 6, lb = 1E-2, ub = 7.5+4.8+5))
   model$setParameter(p11 = c(init = 1, lb = -30, ub = 10))
   model$setParameter(p22 = c(init = 1, lb = -30, ub = 10))
   model$setParameter(e11 = c(init = -1, lb = -50, ub = 10))
