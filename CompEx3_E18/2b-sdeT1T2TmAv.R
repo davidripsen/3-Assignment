@@ -32,19 +32,18 @@ sdeT1T2TmAv_2b <- function(data,yT1,Ph){
   #model$setParameter(Aw = c(init = 6, lb = 1E-2, ub = 7.5+4.8+5))
   model$setParameter(p11 = c(init = 1, lb = -30, ub = 10))
   model$setParameter(p22 = c(init = 1, lb = -30, ub = 10))
-  model$setParameter(e11 = c(init = -1, lb = -50, ub = 10))
-  model$setParameter(a1 = c(init = 1.5880e+01, lb = -500, ub = 1000))
-  model$setParameter(a2 = c(init = -2.2628e+00, lb = -500, ub = 1000))
-  model$setParameter(a3 = c(init = 1.2802e+01, lb = -500, ub = 1000))
-  model$setParameter(a4 = c(init = -6.8605e+00, lb = -500, ub = 1000))
-  model$setParameter(a5 = c(init = 4.7242e+01, lb = -500, ub = 1000))
+  model$setParameter(e11 = c(init = 1, lb = -50, ub = 10))
+  model$setParameter(a1 = c(init = 1, lb = -500, ub = 1000))
+  model$setParameter(a2 = c(init = 1, lb = -500, ub = 1000))
+  model$setParameter(a3 = c(init = 1, lb = -500, ub = 1000))
+  model$setParameter(a4 = c(init = 1, lb = -500, ub = 1000))
+  model$setParameter(a5 = c(init = 1, lb = -500, ub = 1000))
   ##----------------------------------------------------------------    
   # Optimization criteria
-   #model$options$eps(1E-6)
-   #model$options$maxNumberOfEval(10)
+  model$options$maxNumberOfEval = 1000
+  model$options$eps = 1E-6
   
   # Run the parameter optimization
-  
   fit = model$estimate(data,firstorder = TRUE)
   return(fit)
 }

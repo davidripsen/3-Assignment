@@ -30,7 +30,7 @@ sdeTiTmAv <- function(data, yTi,Ph){
   #model$setParameter(Aw = c(init = 6, lb = 1E-2, ub = 7.5+4.8+5))
   model$setParameter(p11 = c(init = 1, lb = -30, ub = 10))
   model$setParameter(p22 = c(init = 1, lb = -30, ub = 10))
-  model$setParameter(e11 = c(init = -1, lb = -50, ub = 10))
+  model$setParameter(e11 = c(init = 1, lb = -50, ub = 10))
   model$setParameter(a1 = c(init = 4, lb = -500, ub = 1000))
   model$setParameter(a2 = c(init = 4, lb = -500, ub = 1000))
   model$setParameter(a3 = c(init = 4, lb = -500, ub = 1000))

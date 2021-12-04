@@ -151,45 +151,49 @@ Where $\Phi = (\Phi_1+\Phi_2)/2$.
 source(paste0(path,"2b-2-sdeT1T2TmAv.R"))
 #fit4 <- sdeT1T2TmAvfit4(AllDat,AllDat$yTi1)
 ```
+However, I can't get his model to converge properly, even with reduced convergence criteria and increased function evaluation allowance.
 
-However, this system results in non-positive definite state covariance matrix.
 
 ```{r}
+## Evaluate model
 #fit4$loglik
 #summary(fit4, extended=T)
 #sprintf('Likelihood ratio test from previous model: p-value = %f', 1-pchisq(-2*(fit3$loglik - fit4$loglik),1))
 ```
 
 
-For this reason, I'm satisfied with model 3. Of course there are yet many possible extensions to try out, but for this 
+For this reason, I'm satisfied with model 3. Of course there are yet many possible extensions to try out, but for this single-room model, model 3 will suffice.
+
+I will end this section with model validation of model 3.
+
 
 ```{r}
 # To assses the model fit, calculate the one-step predictions and residuals. Do residual analysis for model validation.
-preds <- predict(fit3, newdata=AllDat)
-## Calculate the residuals and put them with the data in a data.frame X
-yTi1Hat <- preds$output$pred$yTi1
-residuals <- AllDat$yTi1 - yTi1Hat # Hvor kommer q fra?
+
+D = AllDat; D$Ph <- AllDat$Ph1; D$T2 <- AllDat$yTi2; D$yT1 <- AllDat$yTi1;
+preds <- predict(fit3, newdata=D)
+yTi1Hat <- preds$output$pred$yT1
+residuals <- AllDat$yTi1 - yTi1Hat
 
 par(mfrow=c(1,2)) 
-acf(fit3$residuals)
-pacf(fit3$residuals)
+acf(residuals)
+pacf(residuals)
 
-histogram(fit3$residuals)
-qqplot(fit3$residuals)
-qqline(fit3$residuals)
+hist(residuals, breaks=100)
+qqnorm(residuals)
+qqline(residuals)
 
-plot(fit3$residuals)
-cpgram(fit3$residuals)
+plot(residuals)
+cpgram(residuals)
 ```
-
-
-
-
+There is clearly further work to be done - the residuals are far from white noise. Inspecting the autocorrelation and partial autocorrelation, it would clearly be beneficial to adopt this autoregression further, particularly in lag 24. There is a strong over-dispersion in the residuals.
 
 
 
 
 # 3 Making a multi-room model
+
+bla bla... bla bla bla.
 
 $$
 \begin{aligned} d T_{1} &=\frac{1}{C_{i}}\left(\frac{1}{R_{i a}}\left(T_{a}-T_{1}\right)+\frac{1}{R_{i m}}\left(T_{1m}-T_{1}\right)+\Phi+ A_w G_{v}\right) d t+\sigma_{1} d w_{1,1} \\
@@ -225,6 +229,15 @@ fitmultim = sde_multi_room(D)
 fitmultim$loglik
 summary(fitmultim, extended=T)
 ```
+
+Inspecting the fit is evident that
+- all parameters are significant
+- none of the parameters are too strongly correlated
+- sone partial derivatives are stil fairly large.
+
+
+
+
 
 
 
