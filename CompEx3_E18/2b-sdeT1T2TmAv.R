@@ -1,4 +1,4 @@
-sdeT1T2TmAv <- function(data,yT1,Ph){
+sdeT1T2TmAv_2b <- function(data,yT1,Ph){
   # Observed variables / data
   data$yT1 <- yT1
   data$Ph <- Ph

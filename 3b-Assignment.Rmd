@@ -122,8 +122,9 @@ d T_{m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{1}-T_{m}\right) + \frac
 
 Let's estimate it
 ```{r, results="hide"}
+set.seed(101)
 source(paste0(path,"2b-sdeT1T2TmAv.R"))
-fit3 <- sdeT1T2TmAv(AllDat,AllDat$yTi1,AllDat$Ph1)
+fit3 <- sdeT1T2TmAv_2b(AllDat,AllDat$yTi1,AllDat$Ph1)
 ```
 
 Let's have a look at the model.
@@ -156,12 +157,11 @@ However, this system results in non-positive definite state covariance matrix.
 ```{r}
 #fit4$loglik
 #summary(fit4, extended=T)
-
 #sprintf('Likelihood ratio test from previous model: p-value = %f', 1-pchisq(-2*(fit3$loglik - fit4$loglik),1))
 ```
 
 
-For this reason, I'm satisfied with model 3..... Of course, there are yet many possible extensions to try out.
+For this reason, I'm satisfied with model 3. Of course there are yet many possible extensions to try out, but for this 
 
 ```{r}
 # To assses the model fit, calculate the one-step predictions and residuals. Do residual analysis for model validation.
