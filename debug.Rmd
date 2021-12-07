@@ -8,18 +8,17 @@ header-includes: \usepackage{graphicx, verbatim, fancyvrb, setspace, xspace, col
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(eval = TRUE)
+knitr::opts_chunk$set(eval = F)
 ```
 
 
 # Part 2: Modelling a building using CTSM-R
 ## 2a: 2-state model of a single room
 
-In this exercise, I will estimate the following model where the impact of the measured solar radiation $G_v$ is scaled relative the sun's angle through the window. Since we do not have access to this information, a non-parametric fit will be done using B-splines. The model is
+We will estimate the following model where the impact of the measured radiation $G_v$ is scaled relative the sun's angle through the window. Since we do not have access to this information, a non-parametric fit will be done using B-splines.
 
 $$\begin{aligned} d T_{i} &=\frac{1}{C_{i}}\left(\frac{1}{R_{i a}}\left(T_{a}-T_{i}\right)+\frac{1}{R_{i m}}\left(T_{m}-T_{i}\right)+\Phi+\left(\sum_{k=1}^{N} a_{k} b s_{k}(t)\right) G_{v}\right) d t+\sigma_{1} d w_{1} \\ d T_{m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{i}-T_{m}\right)\right) d t+\sigma_{2} d w_{2} . \\ y T_{i} &=T_{i}+e_{1}, \end{aligned}$$
 
-Let's estimate the model
 
 ```{r, results="hide"}
 #install.packages("ctsmr", repo = "http://ctsm.info/repo/dev")
@@ -83,7 +82,7 @@ source(paste0(path,"sdeTiTmAv.R"))
 fit2 <- sdeTiTmAv(AllDat,AllDat$yTi1,AllDat$Ph1)
 ```
 
-Let's compare the two models, i.e. with and without the spline-fit for the relative radation impact.
+Let's compare the two models
 
 ```{r}
 sprintf('Model 1: logL = %f', fit1$loglik)
@@ -103,7 +102,7 @@ We see that all parameters are significant, except for a2. For completeness, a2 
 plot(9:22, bs[14:27,1]*fit2$xm[3]+bs[14:27,2]*fit2$xm[4]+bs[14:27,3]*fit2$xm[5]+bs[14:27,4]*fit2$xm[6]+bs[14:27,5]*fit2$xm[7],type='l')
 ```
 
-Remember that the above fit is not the *actual* heat input from radiation, but it is a *weighting* of the measured radiation. Apparently, the model would like to have more emphasis on the radiation when the sun is low.
+Remember, that the above fit is not the actual input radiation to the room, but it is a *weighting* of the actual radiation. Apparently, the model would like to have more emphasis on the radiation when the sun is low.
 
 
 
@@ -114,15 +113,15 @@ Remember that the above fit is not the *actual* heat input from radiation, but i
 In this part, I will try to expand the model.
 First, note how the effect of the temperature in room 3 and 4 affects only room 1 through the medium of room 2. In other words: $T_1$ is *conditionally independent* of $T_3$ and $T_4$ when $T_2$ is known.
 
-Initially, I added the temperature of the neighboring room ($T_2$) as an additional state and then had it impact $dT_1$. However, I realized that the temperature of room 2 only affects room 1 through *the wall* as a medium, i.e. the thermal mass of room 1. And since we have direct measurements of $T2$ and only focus on modelling the single-room ($T1$), I add it as input to the model instead with the term: $$\frac{1}{R_{2,1}}(T_2-T_1)$$
+Initially, I added the temperature of the neighboring room ($T_2$) as an additional state and then had it impact $dT_1$. However, I realized that the temperature of room 2 only affects room 1 through *the wall* as a medium, i.e. the thermal mass of room 1. And since we have direct measurements of $T2$ and only focus on modelling the single-room ($T1$), I add it as input to the model with the term: $$\frac{1}{R_{2,1}}(T_2-T_1)$$
 thereby letting the change in thermal mass of room 1 ($dT_m$) being proportional to the difference in temperature between the two rooms.
 
-The model (model 3) is then
+The model is then
 
 $$\begin{aligned} d T_{1} &=\frac{1}{C_{1}}\left(\frac{1}{R_{i a}}\left(T_{a}-T_{1}\right)+\frac{1}{R_{i m}}\left(T_{m}-T_{1}\right)+\Phi+\left(\sum_{k=1}^{N} a_{k} b s_{k}(t)\right) G_{v}\right) d t+\sigma_{1} d w_{1} \\
 d T_{m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{1}-T_{m}\right) + \frac{1}{R_{2,1}}(T_2-T_1)\right) d t+\sigma_{2} d w_{2} . \\ y T_{1} &=T_{1}+e_{1}, \end{aligned}$$
 
-Let's estimate model 3
+Let's estimate it
 ```{r, results="hide"}
 set.seed(101)
 source(paste0(path,"2b-sdeT1T2TmAv.R"))
@@ -138,7 +137,7 @@ summary(fit3, extended=T)
 
 Again, a large improvement in likelihood is seen (at the cost of 1 extra parameter). Since the two models are nested, at likehood ratio test is performed and shows a very strong signficant difference. Again, all parameters are significant, except for the observation error which might in fact have 0 as the true value, however we do see some strong correlations in the coefficients (!).
 
-Now expanding further on the model, I see that the radiator is placed close to the window in room 1, i.e. some of the heating might go straight out of the window. Additionally, I note that the North Heating Circuit and South Heating Circuit are piped together before entering the building, so the actual heating in room 1 is a mix of the two (however, the two are higly correlated with $\hat{\rho} = 0.91$). For model extenstions; Use $\Phi = (\Phi_1+\Phi_2)/2$ and additionally change the $\Phi$-term in $dT_1$ to the term $(1-c) \Phi - c\Phi (T_1-T_a)$, where $c \in [0,1]$. This makes a proportion $c$ of the heating load escape directly through the window relative to the temperature difference\footnote{I would have liked it to be a ratio instead of difference, but that makes it much harder for CTSM to solve.} between inside and outside\footnote{The meaning of $T_a$ is not explicit from the assignment. From plots I've concluded to assume it to be the outside temperature.}. Note that using this formulation, the hypothesis H0: $c=0$  is of interest (meaning no loss of heating) and when the outdoor and indoor temperature is the same, the second term cancels (meaning no loss of heating).
+Now expanding further on the model, I see that the radiator is placed close to the window in room 1, i.e. some of the heating might go straight out of the window. Additionally, I note that the North Heating Circuit and South Heating Circuit are piped together before entering the building, so the actual heating in room 1 is a mix of the two (however, the two are higly correlated with $\hat{\rho} = 0.91$). I.e. denote = $\Phi = (\Phi_1+\Phi_2)/2$ and change then the $\Phi$ term in $dT_1$ to the term $(1-c) \Phi - c\Phi \frac{T_1-T_a}{T_1}$, where $c \in [0,1]$. This makes a proportion $c$ of the heating load escape directly through the window relative to the temperature difference\footnote{I would have liked it to be a ratio instead of difference, but that makes it much harder for CTSM to solve.} between inside and outside\footnote{The meaning of $T_a$ is not explicit from the assignment. From plots I've concluded to assume it to be the outside temperature.}. Note that using this formulation, the hypothesis H0: $c=0$  is of interest (meaning no loss of heating) and when the outdoor and indoor temperature is the same, the second term cancels (meaning no loss of heating).
 
 The model then becomes
 $$\begin{aligned} d T_{1} &=\frac{1}{C_{1}}\left(\frac{1}{R_{i a}}\left(T_{a}-T_{1}\right)+\frac{1}{R_{i m}}\left(T_{m}-T_{1}\right)+ ((1-c) \Phi - c\Phi (T_1 - T_a)) +\left(\sum_{k=1}^{N} a_{k} b s_{k}(t)\right) G_{v}\right) d t+\sigma_{1} d w_{1} \\
@@ -170,8 +169,7 @@ I will end this section with model validation of model 3.
 
 
 ```{r}
-# To assess the model fit, calculate the one-step predictions and residuals.
-# Do residual analysis for model validation.
+# To assses the model fit, calculate the one-step predictions and residuals. Do residual analysis for model validation.
 
 D = AllDat; D$Ph <- AllDat$Ph1; D$T2 <- AllDat$yTi2; D$yT1 <- AllDat$yTi1;
 preds <- predict(fit3, newdata=D)
@@ -196,23 +194,22 @@ There is clearly further work to be done - the residuals are far from white nois
 
 # 3 Making a multi-room model
 
-In this exercise, I will fit a continuous-discrete state space model to the 4 rooms. I will extend model 3 to the multi-room case with the following considerations and simplifications (for computational feasibility and identifiability):
+In this exercise, I will fit a continuous-discrete state space model to there 4 rooms. I will use extend model 3 to the multi-room case with the following considerations and simplifications (for computational feasibility/identifiability):
 
 \begin{enumerate}
-  \item The thermal diffusion from one room to another is only present for neighboring rooms - and enters *through* the thermal mass.
+  \item The thermal diffusion from other rooms is only present for the exact neighbouring rooms - and enters **through** the thermal mass.
   \item Only room 1 and 4 are neighbours to the outside ($T_a$)
   \item Use $\Phi = (\Phi_1 + \Phi_2)/2$
-  \item Use $R_{iw}$ for the resistance of interior walls as a generalization of $R_{2,1}$.
-  \item Assume shared parameters where relevant, e.g. assume similar walls $R_{iw}$ (simplification)
-  \item Assume equal variances across rooms $\{\sigma_1^2, \sigma_2^2\}$ (simplification)
+  \item Use $R_{iw}$ for the resistance of interior walls as a generalization of $R_2,1$.
+  \item Assume shared parameters where relevant, e.g. assume similar walls $R_iw$ (simplification)
+  \item Initially, assume equal variances across rooms $\{\sigma_1^2, \sigma_2^2\}$ (simplification)
   \item Use $A_w$ instead of splines (simplification)
 \end{enumerate}
 
 The model is as follows
 
 
-$$
-\begin{aligned}
+$$ \begin{aligned}
 d T_{1} &=\frac{1}{C_{i}}\left(\frac{1}{R_{i a}}\left(T_{a}-T_{1}\right)+\frac{1}{R_{i m}}\left(T_{1m}-T_{1}\right)+\Phi+\left(\sum_{k=1}^{N} a_{k} b s_{k}(t)\right) G_{v}\right) d t+\sigma_{1} d w_{1,1} \\
 d T_{1m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{1}-T_{1m}\right) + \frac{1}{R_{iw}}(T_2-T_1)\right) d t+\sigma_{2} d w_{1,2} . \\
 d T_{2} &=\frac{1}{C_{i}}\left(\frac{1}{R_{i m}}\left(T_{2m}-T_{2}\right)+\Phi\right) d t+\sigma_{1} d w_{2,1} \\
@@ -220,107 +217,5 @@ d T_{2m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{2}-T_{2m}\right) + \fr
 d T_{3} &=\frac{1}{C_{i}}\left(\frac{1}{R_{i m}}\left(T_{3m}-T_{3}\right) + \Phi\right) d t+\sigma_{1} d w_{3,1} \\
 d T_{3m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{3}-T_{3m}\right) + \frac{1}{R_{iw}}(T_2-T_3) + \frac{1}{R_{iw}}(T_4-T_3) \right) d t+\sigma_{2} d w_{3,2} . \\
 d T_{4} &=\frac{1}{C_{i}}\left(\frac{1}{R_{i a}}\left(T_{a}-T_{4}\right)+\frac{1}{R_{i m}}\left(T_{4m}-T_{4}\right)+\Phi+\left(\sum_{k=1}^{N} a_{k} b s_{k}(t)\right) G_{v}\right) d t+\sigma_{1} d w_{4,1} \\
-d T_{4m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{4}-T_{4m}\right) + \frac{1}{R_{iw}}(T_3-T_4)\right) d t+\sigma_{2} d w_{4,2} . \\
-\forall_{i \in \{1,2,3,4\}} y T_{i} &=T_{i}+e_{i}
-\end{aligned}
-$$
-
-Let's fit the model
-
-```{r, results='hide'}
-D = AllDat[1:2000,]# Subset the data for computional feasibility. 3111 for all.
-source(paste0(path,"3-multi-room.R"))
-fitmultim = sde_multi_room(D)
-```
-
-The model diverges when trained on the whole dataset, but returns a proper fit when trained on $2/3$ of the data. Let's evaluate the fit:
-
-```{r}
-fitmultim$loglik
-summary(fitmultim, extended=T)
-```
-
-Inspecting the fit is evident that
-\begin{enumerate}
-  \item All parameters are significant
-  \item None of the parameters are too strongly correlated
-  \item Some partial derivatives are still fairly large.
-\end{enumerate}
-
-\newpage
-
-As a final model I will try to lift two simplifications:
-\begin{enumerate}
-  \item Let each room temperature ($T_i$) and room thermal mass ($T_{im}$) have unique variances $\{\sigma_{i,1}^2, \sigma_{i,2}^2\}$
-  \item Expand the $A_w$ to the spline-fit which proved very beneficial in the first model. Still assume equal weighting of splines for the northen and southern room.
-\end{enumerate}
-
-In other words, the final model is:
-
-$$
-\begin{aligned} d T_{1} &=\frac{1}{C_{i}}\left(\frac{1}{R_{i a}}\left(T_{a}-T_{1}\right)+\frac{1}{R_{i m}}\left(T_{1m}-T_{1}\right)+\Phi+ A_w G_{v}\right) d t+\sigma_{1,1} d w_{1,1} \\
-d T_{1m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{1}-T_{1m}\right) + \frac{1}{R_{iw}}(T_2-T_1)\right) d t+\sigma_{1,2} d w_{1,2} .\\
-d T_{2} &=\frac{1}{C_{i}}\left(\frac{1}{R_{i m}}\left(T_{2m}-T_{2}\right)+\Phi\right) d t+\sigma_{2,1} d w_{2,1} \\
-d T_{2m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{2}-T_{2m}\right) + \frac{1}{R_{iw}}(T_1-T_2) + \frac{1}{R_{iw}}(T_3-T_2)\right) d t+\sigma_{2,2} d w_{2,2} . \\
-d T_{3} &=\frac{1}{C_{i}}\left(\frac{1}{R_{i m}}\left(T_{3m}-T_{3}\right) + \Phi\right) d t+\sigma_{3,1} d w_{3,1} \\
-d T_{3m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{3}-T_{3m}\right) + \frac{1}{R_{iw}}(T_2-T_3) + \frac{1}{R_{iw}}(T_4-T_3) \right) d t+\sigma_{3,2} d w_{3,2} . \\
-d T_{4} &=\frac{1}{C_{i}}\left(\frac{1}{R_{i a}}\left(T_{a}-T_{4}\right)+\frac{1}{R_{i m}}\left(T_{4m}-T_{4}\right)+\Phi+ A_w G_{v}\right) d t+\sigma_{4,1} d w_{4,1} \\
-d T_{4m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{4}-T_{4m}\right) + \frac{1}{R_{iw}}(T_3-T_4)\right) d t+\sigma_{4,2} d w_{4,2} . \\
-\forall_{i \in \{1,2,3,4\}} y T_{i} &=T_{i}+e_{i} \end{aligned}
-$$
-
-Let's estimate it
-
-```{r, results='hide'}
-D = AllDat[1:500,]# Subset the data for computional feasibility. 3111 for all.
-source(paste0(path,"3b-multi-room.R"))
-fitmulti2 = sde2_multi_room(D)
-
-# Also fit the previous model on the same subset of data to allow for AIC-comparison of the models 
-fitmulti1 = sde_multi_room(D)
-```
-
-Let's evaluate the fit
-
-```{r}
-fitmulti2$loglik
-sprintf("AIC for comparison of non-nested models:")
-sprintf("AIC of final model: %f", -2*fitmulti2$loglik + 2*length(fitmulti2$xm))
-sprintf("AIC of previous model: %f", -2*fitmultim$loglik + 2*length(fitmulti1$xm))
-summary(fitmulti2, extended=T)
-```
-
-Inspecting the fit is evident that
-\begin{enumerate}
-  \item All parameters are significant, except for $a_2$, $a_4$ and $e_4$ which is not of great importance.
-  \item None of the parameters are too strongly correlated.
-  \item Convergence has reasonably been met.
-  \item A very large improvement in AIC from the previous model.
-\end{enumerate}
-
-
-
-I will end this assignment with model validation of the final model. In order not to overload the reader, I will only show residuals for room 1 (which is then comparable to the previous single-room exercise).
-
-```{r}
-# To asses the model fit, calculate the one-step predictions and residuals.
-# Do residual analysis for model validation.
-D$Ph = (D$Ph1 + D$Ph2)/2; D$yT2 <- D$yTi2; D$yT1 <- D$yTi1; D$yT3 <- D$yTi3; D$yT4 <- D$yTi4;
-preds <- predict(fitmulti2, newdata=D)
-
-yTi1Hat <- preds$output$pred$yT1
-residuals <- D$yTi1 - yTi1Hat
-
-par(mfrow=c(1,2)) 
-acf(residuals)
-pacf(residuals)
-
-hist(residuals, breaks=100)
-qqnorm(residuals)
-qqline(residuals)
-
-plot(residuals)
-cpgram(residuals)
-```
-
-We see a clear improvement in the residuals from the single-room model, however there is still room for improvement. Next step would be to let the variance be non-constant, letting the diffusion-term be a function of the states.
+d T_{4m} &=\frac{1}{C_{m}}\left(\frac{1}{R_{i m}}\left(T_{4}-T_{4m}\right) + \frac{1}{R_{iw}}(T_3-T_4)\right) d t+\sigma_{2} d w_{4,2} . \\\forall_{i \in \{1,2,3,4\}} y T_{i} &=T_{i}+e_{i}
+\end{aligned} $$
